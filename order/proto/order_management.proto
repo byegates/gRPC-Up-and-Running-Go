@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package ecommerce;
+option go_package = "productinfo/service/ecommerce";
+
+message Order {
+    string id = 1;
+    repeated string items = 2;
+    string description = 3;
+    float price = 4;
+    string destination = 5;
+}
+
+message CombinedShipment {
+    string id = 1;
+    string status = 2;
+    repeated Order ordersList = 3;
+}
+
+message OrderId {
+    string id = 1;
+}
+
+message SearchRequest {
+    string s = 1;
+}
+
+message OrderIdList {
+    repeated string ids = 1;
+}
+
+service OrderManagement {
+    rpc addOrder(Order) returns (OrderId); // addOrderRequest, AddOrderResponse
+    rpc getOrder(OrderId) returns (Order);
+    rpc searchOrders(SearchRequest) returns (stream Order);
+    rpc updateOrders(stream Order) returns (OrderIdList);
+    rpc processOrders(stream OrderId) returns (stream CombinedShipment);
+}
+
+/*
+at folder where proto folder is located, run below command:
+
+protoc --go_out=. --go_opt=paths=source_relative \
+    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+    proto/order_management.proto
+ */
