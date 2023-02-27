@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.21.12
-// source: proto/order_management.proto
+// source: order/proto/order_management.proto
 
 package order
 
@@ -98,7 +98,7 @@ func (c *orderManagementClient) UpdateOrders(ctx context.Context, opts ...grpc.C
 
 type OrderManagement_UpdateOrdersClient interface {
 	Send(*Order) error
-	CloseAndRecv() (*OrderIdList, error)
+	CloseAndRecv() (*UpdateOrdersRequest, error)
 	grpc.ClientStream
 }
 
@@ -110,11 +110,11 @@ func (x *orderManagementUpdateOrdersClient) Send(m *Order) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *orderManagementUpdateOrdersClient) CloseAndRecv() (*OrderIdList, error) {
+func (x *orderManagementUpdateOrdersClient) CloseAndRecv() (*UpdateOrdersRequest, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := new(OrderIdList)
+	m := new(UpdateOrdersRequest)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -258,7 +258,7 @@ func _OrderManagement_UpdateOrders_Handler(srv interface{}, stream grpc.ServerSt
 }
 
 type OrderManagement_UpdateOrdersServer interface {
-	SendAndClose(*OrderIdList) error
+	SendAndClose(*UpdateOrdersRequest) error
 	Recv() (*Order, error)
 	grpc.ServerStream
 }
@@ -267,7 +267,7 @@ type orderManagementUpdateOrdersServer struct {
 	grpc.ServerStream
 }
 
-func (x *orderManagementUpdateOrdersServer) SendAndClose(m *OrderIdList) error {
+func (x *orderManagementUpdateOrdersServer) SendAndClose(m *UpdateOrdersRequest) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -339,5 +339,5 @@ var OrderManagement_ServiceDesc = grpc.ServiceDesc{
 			ClientStreams: true,
 		},
 	},
-	Metadata: "proto/order_management.proto",
+	Metadata: "order/proto/order_management.proto",
 }

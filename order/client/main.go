@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	pb "ecommerce/order/proto"
+	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"io"
@@ -48,7 +49,7 @@ func addOrder(ctx context.Context, c pb.OrderManagementClient) string {
 	defer log.Printf("%v [End]\n\n", tag0)
 
 	ord := pb.Order{Id: "101", Items: []string{"iPhone XS", "Mac Book Pro"}, Destination: "San Jose, CA", Price: 2299.00}
-	log.Printf("%v Trying to create: %v\n", tag0, &ord)
+	log.Printf("%v [Creating] %v\n", tag0, &ord)
 
 	_, err := c.AddOrder(ctx, &ord)
 	if err != nil {
@@ -64,6 +65,7 @@ func getOrder(ctx context.Context, c pb.OrderManagementClient, id string) {
 	tag0 := tag + " [R]"
 	log.Printf("%v [Invoked]\n", tag0)
 	defer log.Printf("%v [End]\n\n", tag0)
+
 	ord, err := c.GetOrder(ctx, &pb.OrderId{Id: id})
 
 	if err != nil {
@@ -79,9 +81,9 @@ func searchOrders(ctx context.Context, c pb.OrderManagementClient, s string) {
 	log.Printf("%v [Invoked]\n", tag0)
 	defer log.Printf("%v [End]\n\n", tag0)
 
-	searchStream, _ := c.SearchOrders(ctx, &pb.SearchRequest{S: s})
+	stream, _ := c.SearchOrders(ctx, &pb.SearchRequest{S: s})
 	for {
-		searchOrder, err := searchStream.Recv()
+		order, err := stream.Recv()
 
 		if err == io.EOF {
 			log.Printf("%v [EOF]\n", tag0)
@@ -93,7 +95,7 @@ func searchOrders(ctx context.Context, c pb.OrderManagementClient, s string) {
 			continue
 		}
 
-		log.Printf("%v [Recv]\n", searchOrder)
+		log.Printf("%v [Recv] %v\n", tag0, order)
 	}
 
 }
@@ -104,7 +106,7 @@ func updateOrders(ctx context.Context, c pb.OrderManagementClient) {
 	log.Printf("%v [Invoked]\n", tag0)
 	defer log.Printf("%v [End]\n\n", tag0)
 
-	orders := []pb.Order{
+	orders := []*pb.Order{
 		{Id: "102", Items: []string{"Google Pixel 3A", "Google Pixel Book"}, Destination: "Mountain View, CA", Price: 1100.00},
 		{Id: "103", Items: []string{"Apple Watch S4", "Mac Book Pro", "iPad Pro"}, Destination: "San Jose, CA", Price: 2800.00},
 		{Id: "104", Items: []string{"Google Home Mini", "Google Nest Hub", "iPad Mini"}, Destination: "Mountain View, CA", Price: 2200.00},
@@ -117,18 +119,16 @@ func updateOrders(ctx context.Context, c pb.OrderManagementClient) {
 	}
 
 	for _, ord := range orders {
-		if err := stream.Send(&ord); err != nil {
+		if err := stream.Send(ord); err != nil {
 			log.Fatalf("%v %v.Send(%v) = %v", tag0, stream, &ord, err)
 		}
 	}
 
-	updatedIds, err := stream.CloseAndRecv()
+	ids, err := stream.CloseAndRecv()
 	if err != nil {
 		log.Fatalf("%v %v.CloseAndRecv() got error %v, want %v\n\n", tag0, stream, err, nil)
 	}
-	log.Printf("%v [Success] %s\n\n", tag0, updatedIds)
-
-	log.Printf("%v [END]\n", tag0)
+	log.Printf("%v [Success] %s\n", tag0, ids)
 }
 
 // =========================================
@@ -138,7 +138,7 @@ func processOrders(ctx context.Context, client pb.OrderManagementClient) {
 	log.Printf("%v [Invoked]\n", tag0)
 	defer log.Printf("%v [End]\n\n", tag0)
 
-	reqs := []pb.OrderId{
+	reqs := []*pb.OrderId{
 		{Id: "102"},
 		{Id: "103"},
 		{Id: "104"},
@@ -155,7 +155,7 @@ func processOrders(ctx context.Context, client pb.OrderManagementClient) {
 	go asyncClientBidirectionalRPC(stream, channel)
 
 	for _, req := range reqs {
-		if err := stream.Send(&req); err != nil {
+		if err := stream.Send(req); err != nil {
 			log.Fatalf("%v %v.Send(%v) = %v", tag0, client, req.Id, err)
 		}
 	}
@@ -170,11 +170,16 @@ func processOrders(ctx context.Context, client pb.OrderManagementClient) {
 func asyncClientBidirectionalRPC(streamProcOrder pb.OrderManagement_ProcessOrdersClient, c chan struct{}) {
 	tag0 := tag + " [BI]"
 	for {
-		combinedShipment, errProcOrder := streamProcOrder.Recv()
-		if errProcOrder == io.EOF {
+		combinedShipment, err := streamProcOrder.Recv()
+		if err == io.EOF {
+			log.Printf("%v [Error] %v\n", tag0, err)
 			break
 		}
-		log.Printf("%v Combined shipment : %v\n", tag0, combinedShipment.OrdersList)
+		msg := fmt.Sprintf("%v\n\tCombined shipment :\n", tag0)
+		for _, ord := range combinedShipment.OrdersList {
+			msg += fmt.Sprintf("\t\t%v\n", ord)
+		}
+		log.Printf(msg)
 	}
 	<-c
 }
