@@ -154,12 +154,11 @@ func (s *Server) ProcessOrders(stream pb.OrderManagement_ProcessOrdersServer) er
 		destination := orderMap[orderId.Id].Destination
 		shipment, found := shipmentMap[destination]
 
-		ord := orderMap[orderId.Id]
 		if !found {
 			shipment = &pb.CombinedShipment{Id: fmt.Sprint(orderMap[orderId.Id].Destination)}
+			shipmentMap[destination] = shipment
 		}
-		shipment.OrdersList = append(shipment.OrdersList, ord)
-		shipmentMap[destination] = shipment
+		shipment.OrdersList = append(shipment.OrdersList, orderMap[orderId.Id])
 
 		if batchMarker == orderBatchSize {
 			for _, comb := range shipmentMap {
