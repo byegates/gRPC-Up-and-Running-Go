@@ -4,7 +4,7 @@
 // - protoc             v3.21.12
 // source: proto/order_management.proto
 
-package ecommerce
+package order
 
 import (
 	context "context"
