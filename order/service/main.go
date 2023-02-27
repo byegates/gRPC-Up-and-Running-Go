@@ -21,13 +21,10 @@ const (
 
 var orderMap = make(map[string]pb.Order)
 
-//var m = sync.Map{}
-
 type Server struct {
 	pb.OrderManagementServer
 	//pb.UnimplementedOrderManagementServer
 	orderMap map[string]*pb.Order
-	//m        sync.Map
 }
 
 func (s *Server) mustEmbedUnimplementedOrderManagementServer() {
@@ -69,7 +66,6 @@ func (s *Server) AddOrder(_ context.Context, req *pb.Order) (*pb.OrderId, error)
 	tag0 := tag + " [C]"
 	log.Printf("%v [Invoked] [ID] %v\n\n", tag0, req.Id)
 	orderMap[req.Id] = *req
-	//m.Store(req.Id, *req)
 	return &pb.OrderId{Id: req.Id}, nil
 }
 
@@ -176,12 +172,6 @@ func (s *Server) ProcessOrders(stream pb.OrderManagement_ProcessOrdersServer) er
 }
 
 func initSampleData() {
-	//m.Store("102", pb.Order{Id: "102", Items: []string{"Google Pixel 3A", "Mac Book Pro"}, Destination: "Mountain View, CA", Price: 1800.00})
-	//m.Store("103", pb.Order{Id: "103", Items: []string{"Apple Watch S4"}, Destination: "San Jose, CA", Price: 400.00})
-	//m.Store("104", pb.Order{Id: "104", Items: []string{"Google Home Mini", "Google Nest Hub"}, Destination: "Mountain View, CA", Price: 400.00})
-	//m.Store("105", pb.Order{Id: "105", Items: []string{"Amazon Echo"}, Destination: "San Jose, CA", Price: 30.00})
-	//m.Store("106", pb.Order{Id: "106", Items: []string{"Amazon Echo", "Apple iPhone XS"}, Destination: "Mountain View, CA", Price: 300.00})
-
 	orderMap["102"] = pb.Order{Id: "102", Items: []string{"Google Pixel 3A", "Mac Book Pro"}, Destination: "Mountain View, CA", Price: 1800.00}
 	orderMap["103"] = pb.Order{Id: "103", Items: []string{"Apple Watch S4"}, Destination: "San Jose, CA", Price: 400.00}
 	orderMap["104"] = pb.Order{Id: "104", Items: []string{"Google Home Mini", "Google Nest Hub"}, Destination: "Mountain View, CA", Price: 400.00}
