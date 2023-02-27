@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
+	pb "ecommerce/product/proto"
 	"log"
-	pb "productinfo/service/product/proto"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
