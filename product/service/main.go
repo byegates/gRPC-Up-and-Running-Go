@@ -4,7 +4,7 @@ import (
 	"log"
 	"net"
 
-	pb "productinfo/service/product/proto"
+	pb "ecommerce/product/proto"
 
 	"google.golang.org/grpc"
 )

@@ -1,4 +1,4 @@
-module productinfo/service
+module ecommerce
 
 go 1.20
 
