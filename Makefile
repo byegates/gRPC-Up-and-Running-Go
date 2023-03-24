@@ -50,8 +50,8 @@ $(project):
 #	protoc -I $@/${PROTO_DIR} --go_opt=paths=source_relative --go_out=. --go-grpc_opt==paths=source_relative --go-grpc_out=. $@/${PROTO_DIR}/*.proto
 #	protoc -I$@/${PROTO_DIR} --go_opt=module=${PACKAGE} --go_out=. --go-grpc_opt=module=${PACKAGE} --go-grpc_out=. $@/${PROTO_DIR}/*.proto
 	protoc --go_out=. --go_opt=paths=source_relative  --go-grpc_out=. --go-grpc_opt=paths=source_relative $@/${PROTO_DIR}/*.proto
-	go build -o ${BIN_DIR}/$@/${SERVER_BIN} ./$@/${SERVER_DIR}
-	go build -o ${BIN_DIR}/$@/${CLIENT_BIN} ./$@/${CLIENT_DIR}
+	go build -race -o ${BIN_DIR}/$@/${SERVER_BIN} ./$@/${SERVER_DIR}
+	go build -race -o ${BIN_DIR}/$@/${CLIENT_BIN} ./$@/${CLIENT_DIR}
 
 test: all ## Launch tests
 	go test ./...

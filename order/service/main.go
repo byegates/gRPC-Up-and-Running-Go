@@ -136,12 +136,13 @@ func (s *Server) ProcessOrders(stream pb.OrderManagement_ProcessOrdersServer) er
 		if err == io.EOF {
 			// Client has sent all the messages
 			// Send remaining shipments
-			log.Printf("%v [EOF]\n", tag0)
-			for _, shipment := range shipmentMap {
-				if err := stream.Send(shipment); err != nil {
+			for _, comb := range shipmentMap {
+				log.Printf("%v [CMB Shipping] %20v -> %v\n", tag0, comb.Id, len(comb.OrdersList))
+				if err := stream.Send(comb); err != nil {
 					return err
 				}
 			}
+			log.Printf("%v [EOF]\n", tag0)
 			return nil
 		}
 

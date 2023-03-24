@@ -151,8 +151,8 @@ func processOrders(ctx context.Context, client pb.OrderManagementClient) {
 		log.Fatalf("%v %v.ProcessOrders(_) = _, %v", tag0, client, err)
 	}
 
-	channel := make(chan struct{})
-	go asyncClientBidirectionalRPC(stream, channel)
+	c := make(chan struct{})
+	go asyncClientBidirectionalRPC(stream, c)
 
 	for _, req := range reqs {
 		if err := stream.Send(req); err != nil {
@@ -164,14 +164,18 @@ func processOrders(ctx context.Context, client pb.OrderManagementClient) {
 		log.Fatal(err)
 	}
 
-	channel <- struct{}{}
+	<-c
 }
 
-func asyncClientBidirectionalRPC(streamProcOrder pb.OrderManagement_ProcessOrdersClient, c chan struct{}) {
+func asyncClientBidirectionalRPC(streamProcOrder pb.OrderManagement_ProcessOrdersClient, c chan<- struct{}) {
 	tag0 := tag + " [BI]"
 	for {
 		combinedShipment, err := streamProcOrder.Recv()
 		if err == io.EOF {
+			log.Printf("%v [%v]\n", tag0, err)
+			break
+		}
+		if err != nil {
 			log.Printf("%v [Error] %v\n", tag0, err)
 			break
 		}
@@ -181,5 +185,5 @@ func asyncClientBidirectionalRPC(streamProcOrder pb.OrderManagement_ProcessOrder
 		}
 		log.Printf(msg)
 	}
-	<-c
+	c <- struct{}{}
 }
