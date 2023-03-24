@@ -18,7 +18,9 @@ const (
 
 func main() {
 	// Setting up a connection to the server.
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(orderUnaryClientInterceptor),
+		grpc.WithStreamInterceptor(clientStreamInterceptor))
 
 	if err != nil {
 		log.Fatalf("%vFailed to connect: %v\n", tag, err)
@@ -186,4 +188,45 @@ func asyncClientBidirectionalRPC(streamProcOrder pb.OrderManagement_ProcessOrder
 		log.Printf(msg)
 	}
 	c <- struct{}{}
+}
+
+func orderUnaryClientInterceptor(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	// Pre-processor phase
+	log.Printf("%v [Unary] %v\n", tag, method)
+
+	// Invoking the remote method
+	err := invoker(ctx, method, req, reply, cc, opts...)
+
+	// Post-processor phase
+	//log.Printf("%v [Resp] %v\n", tag, reply)
+
+	return err
+}
+
+func clientStreamInterceptor(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+
+	log.Printf("%v [Stream Interceptor] %v\n", tag, method)
+	s, err := streamer(ctx, desc, cc, method, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return newWrappedStream(s), nil
+}
+
+type wrappedStream struct {
+	grpc.ClientStream
+}
+
+func (w *wrappedStream) RecvMsg(m interface{}) error {
+	log.Printf("%v [Stream Interceptor] [Recv] [Type: %T] [%v] [at %v]", tag, m, &m, time.Now().Format(time.RFC3339))
+	return w.ClientStream.RecvMsg(m)
+}
+
+func (w *wrappedStream) SendMsg(m interface{}) error {
+	log.Printf("%v [Stream Interceptor] [Send] [Type: %T] [%v] [at %v]", tag, m, &m, time.Now().Format(time.RFC3339))
+	return w.ClientStream.SendMsg(m)
+}
+
+func newWrappedStream(s grpc.ClientStream) grpc.ClientStream {
+	return &wrappedStream{s}
 }
